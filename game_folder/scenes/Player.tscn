@@ -331,3 +331,7 @@ anims/walk_down = SubResource( 11 )
 anims/walk_left = SubResource( 12 )
 anims/walk_right = SubResource( 13 )
 anims/walk_up = SubResource( 14 )
+
+[node name="Camera2D" type="Camera2D" parent="."]
+current = true
+zoom = Vector2( 0.6, 0.6 )
