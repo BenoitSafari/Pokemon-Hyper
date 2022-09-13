@@ -2,6 +2,7 @@ extends KinematicBody2D
 
 onready var anim_tree = $PlayerAnimTree
 onready var anim_state = $PlayerAnimTree.get("parameters/playback")
+onready var ray_cast = $RayCast2D
 
 export var speed = 5.0
 const TILE_SIZE = 16
@@ -33,13 +34,17 @@ func _physics_process(delta: float) -> void:
 
 
 func move_player(delta) -> void:
-	motion_progress += speed * delta
-	if motion_progress >= 1.0:
-		position = initial_position + (input_vector * TILE_SIZE)
-		motion_progress = 0.0
-		is_moving = false
+	if get_collision():
+		motion_progress += speed * delta
+		if motion_progress >= 1.0:
+			position = initial_position + (input_vector * TILE_SIZE)
+			motion_progress = 0.0
+			is_moving = false
+		else:
+			position = initial_position + (input_vector * TILE_SIZE * motion_progress)
 	else:
-		position = initial_position + (input_vector * TILE_SIZE * motion_progress)
+		is_moving = false
+		motion_progress = 0.0
 
 func animate_player() -> void:
 	if input_vector == Vector2(0,0):
@@ -48,6 +53,14 @@ func animate_player() -> void:
 		anim_tree.set("parameters/Walk/blend_position", input_vector)
 		anim_tree.set("parameters/Idle/blend_position", input_vector)
 		anim_state.travel("Walk")
+
+func get_collision() -> bool:
+	ray_cast.cast_to = input_vector * TILE_SIZE / 2
+	ray_cast.force_raycast_update()
+	if !ray_cast.is_colliding():
+		return true
+	else:
+		return false
 
 func get_input() -> void:
 	if input_vector.y == 0:

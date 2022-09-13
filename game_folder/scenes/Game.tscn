@@ -8,7 +8,9 @@
 position = Vector2( 1, 0 )
 script = ExtResource( 3 )
 
-[node name="Player" parent="." instance=ExtResource( 1 )]
-position = Vector2( 303, 160 )
+[node name="TestMap" parent="." instance=ExtResource( 2 )]
 
-[node name="Maps" parent="." instance=ExtResource( 2 )]
+[node name="Player" parent="TestMap/Objects" index="0" instance=ExtResource( 1 )]
+position = Vector2( 304, 160 )
+
+[editable path="TestMap"]
