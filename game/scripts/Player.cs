@@ -3,7 +3,7 @@ using Godot;
 public class Player : KinematicBody2D
 {
   [Export]
-  public float Speed = 5.0f;
+  public float Speed = 6.0f;
 
   private const int TileSize = 16;
   private Vector2 InputVector;
@@ -68,13 +68,13 @@ public class Player : KinematicBody2D
 
     if (InputVector == Vector2.Zero)
     {
-      stateMachine.Travel("idle");
+      stateMachine.Travel("Idle");
     }
     else
     {
       animTree.Set("parameters/Walk/blend_position", InputVector);
       animTree.Set("parameters/Idle/blend_position", InputVector);
-      stateMachine.Travel("walk");
+      stateMachine.Travel("Walk");
     }
   }
 
