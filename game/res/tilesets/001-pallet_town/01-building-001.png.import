@@ -2,15 +2,15 @@
 
 importer="texture"
 type="StreamTexture"
-path="res://.import/01-bushes-001.png-a6c74b1db323f7ca44c357bead413dfd.stex"
+path="res://.import/01-building-001.png-e2094d21a15d69253c89d12315042f97.stex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://res/tilesets/01-pallet_town/01-bushes-001.png"
-dest_files=[ "res://.import/01-bushes-001.png-a6c74b1db323f7ca44c357bead413dfd.stex" ]
+source_file="res://res/tilesets/001-pallet_town/01-building-001.png"
+dest_files=[ "res://.import/01-building-001.png-e2094d21a15d69253c89d12315042f97.stex" ]
 
 [params]
 
