@@ -1,5 +1,7 @@
 using Godot;
 
+// FIXME: Player's sprite delayed on directionnal change
+// FIXME: Player's sprite is not centered and uses two tiles. Z-Index is currently identical on both tiles, this need to be updated.
 public class Player : KinematicBody2D
 {
   [Export]
