@@ -14,6 +14,10 @@ config/name="Pokemon Hyper"
 run/main_scene="res://scenes/Game.tscn"
 config/icon="res://icon.png"
 
+[debug]
+
+settings/stdout/print_fps=true
+
 [display]
 
 window/size/width=1280
@@ -24,6 +28,11 @@ window/stretch/aspect="keep"
 [gui]
 
 common/drop_mouse_on_gui_input_disabled=true
+
+[layer_names]
+
+2d_physics/layer_1="Player"
+2d_physics/layer_3="Door"
 
 [mono]
 

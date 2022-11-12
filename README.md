@@ -6,4 +6,4 @@ This is a *Pokemon fan game* using **Godot Engine**.
 ---
 
 ## Documentation Index
-- [Tilemaps](docs/tilemaps.md)
+- #### [Game Map Design](docs/game_map_design.md)
