@@ -1,4 +1,5 @@
 /.vscode
 /.config
 /game/.import
+*/.mono
 /game/mono_crash**

@@ -1,9 +1,0 @@
-/home/benoit/pokemon-hyper/game/.mono/temp/bin/Debug/Pokemon Hyper.dll
-/home/benoit/pokemon-hyper/game/.mono/temp/bin/Debug/Pokemon Hyper.pdb
-/home/benoit/pokemon-hyper/game/.mono/temp/obj/Debug/Pokemon Hyper.csproj.AssemblyReference.cache
-/home/benoit/pokemon-hyper/game/.mono/temp/obj/Debug/Pokemon Hyper.GeneratedMSBuildEditorConfig.editorconfig
-/home/benoit/pokemon-hyper/game/.mono/temp/obj/Debug/Pokemon Hyper.AssemblyInfoInputs.cache
-/home/benoit/pokemon-hyper/game/.mono/temp/obj/Debug/Pokemon Hyper.AssemblyInfo.cs
-/home/benoit/pokemon-hyper/game/.mono/temp/obj/Debug/Pokemon Hyper.csproj.CoreCompileInputs.cache
-/home/benoit/pokemon-hyper/game/.mono/temp/obj/Debug/Pokemon Hyper.dll
-/home/benoit/pokemon-hyper/game/.mono/temp/obj/Debug/Pokemon Hyper.pdb
