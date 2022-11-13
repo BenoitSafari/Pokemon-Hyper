@@ -5,6 +5,31 @@ using Godot;
 
 public class Player : KinematicBody2D
 {
+  [Signal]
+  public delegate void PlayerIsMoving();
+
+  [Signal]
+  public delegate void PlayerIsStandingStill();
+
+  [Signal]
+  public delegate void PlayerCollidedWithDoor();
+
+  [Export]
+  public float Speed = 6.0f;
+
+  public bool IsInputLocked = false;
+
+  private AnimationTree _animationTree;
+  private AnimationNodeStateMachinePlayback _stateMachine;
+  private RayCast2D _rayCastDoor;
+  private RayCast2D _rayCastBump;
+  private Vector2 _inputVector;
+  private Vector2 _initialPosition;
+  private float _motionProgress;
+  private int _motionStrength;
+  private const int _tileSize = 16;
+  private bool _isMoving = false;
+
   private enum CollisionType
   {
     Void,
@@ -18,48 +43,39 @@ public class Player : KinematicBody2D
     Stand
   }
 
-  [Signal]
-  public delegate void PlayerCollidedWithDoor();
-
-  [Export]
-  public float Speed = 6.0f;
-
-  private const int TileSize = 16;
-  private Vector2 InputVector;
-  private Vector2 InitialPosition;
-  private float MotionProgress = 0.0f;
-  private int MotionStrength = 0;
-  private bool IsMoving = false;
-
   public override void _Ready()
   {
-    GetNode<AnimationTree>("AnimationTree").Active = true;
-    InitialPosition = Position;
+    _animationTree = GetNode<AnimationTree>("AnimationTree");
+    _animationTree.Active = true;
+    _stateMachine = (AnimationNodeStateMachinePlayback)_animationTree.Get("parameters/playback");
+    _rayCastDoor = GetNode<RayCast2D>("RayCastDoor");
+    _rayCastBump = GetNode<RayCast2D>("RayCastBump");
+    _initialPosition = Position;
     AnimatePlayer();
   }
 
   public override void _PhysicsProcess(float delta)
   {
     // DEBUG LOGS
-    GD.Print("Player pos:" + Position);
+    // GD.Print("Player pos:" + Position);
+    // GD.Print("_motionProgress:" + _motionProgress);
 
     GetMotionStrength();
-    if (!IsMoving)
+    if (!_isMoving && !IsInputLocked)
     {
       GetInput();
-      if (InputVector != Vector2.Zero)
+      if (_inputVector != Vector2.Zero)
       {
-        InitialPosition = Position;
-        IsMoving = true;
+        _initialPosition = Position;
+        _isMoving = true;
       }
     }
-    else if (InputVector != Vector2.Zero && MotionStrength > 3)
+    else if (_inputVector != Vector2.Zero && _motionStrength > 3)
     {
       switch (GetCollision())
       {
         case CollisionType.Door:
           EmitSignal(nameof(PlayerCollidedWithDoor));
-          GD.Print("Player collided with door");
           MovePlayer(Move.Forward, delta);
           break;
 
@@ -68,12 +84,16 @@ public class Player : KinematicBody2D
           break;
 
         case CollisionType.Void:
+          EmitSignal(nameof(PlayerIsMoving));
           MovePlayer(Move.Forward, delta);
           break;
       }
     }
     else
-      IsMoving = false;
+    {
+      EmitSignal(nameof(PlayerIsStandingStill));
+      MovePlayer(Move.Stand, delta);
+    }
 
     AnimatePlayer();
   }
@@ -83,55 +103,44 @@ public class Player : KinematicBody2D
     switch (enumerator)
     {
       case Move.Forward:
-        MotionProgress += Speed * delta;
-        if (MotionProgress >= 1.0f)
+        _motionProgress += Speed * delta;
+        if (_motionProgress >= 1.0f)
         {
-          Position = InitialPosition + (InputVector * TileSize);
-          MotionProgress = 0.0f;
-          IsMoving = false;
+          Position = _initialPosition + (_inputVector * _tileSize);
+          _motionProgress = 0.0f;
+          _isMoving = false;
         }
         else
-          Position = InitialPosition + (InputVector * TileSize * MotionProgress);
+          Position = _initialPosition + (_inputVector * _tileSize * _motionProgress);
         break;
 
       case Move.Stand:
-        MotionProgress = 0.0f;
-        IsMoving = false;
+        _motionProgress = 0.0f;
+        _isMoving = false;
         break;
     }
   }
 
   private void AnimatePlayer()
   {
-    AnimationTree animTree = GetNode<AnimationTree>("AnimationTree");
-    AnimationNodeStateMachinePlayback stateMachine = (AnimationNodeStateMachinePlayback)
-      animTree.Get("parameters/playback");
-
-    if (InputVector == Vector2.Zero)
-    {
-      stateMachine.Travel("Idle");
-    }
+    if (_inputVector == Vector2.Zero)
+      _stateMachine.Travel("Idle");
     else
     {
-      animTree.Set("parameters/Walk/blend_position", InputVector);
-      animTree.Set("parameters/Idle/blend_position", InputVector);
-      stateMachine.Travel("Walk");
+      _animationTree.Set("parameters/Walk/blend_position", _inputVector);
+      _animationTree.Set("parameters/Idle/blend_position", _inputVector);
+      _stateMachine.Travel("Walk");
     }
   }
 
   private CollisionType GetCollision()
   {
-    RayCast2D RayCastDoor = GetNode<RayCast2D>("RayCastDoor");
-    RayCast2D RayCastBump = GetNode<RayCast2D>("RayCastBump");
-
-    RayCastBump.CastTo = InputVector * TileSize / 2;
-
-    RayCastDoor.ForceRaycastUpdate();
-    RayCastBump.ForceRaycastUpdate();
-
-    if (RayCastDoor.IsColliding())
+    _rayCastBump.CastTo = _inputVector * _tileSize / 2;
+    _rayCastDoor.ForceRaycastUpdate();
+    _rayCastBump.ForceRaycastUpdate();
+    if (_rayCastDoor.IsColliding())
       return CollisionType.Door;
-    else if (RayCastBump.IsColliding())
+    else if (_rayCastBump.IsColliding())
       return CollisionType.Bump;
     else
       return CollisionType.Void;
@@ -139,21 +148,17 @@ public class Player : KinematicBody2D
 
   private void GetInput()
   {
-    if (InputVector.y == 0)
-      InputVector.x = Input.GetActionStrength("ui_right") - Input.GetActionStrength("ui_left");
-    if (InputVector.x == 0)
-      InputVector.y = Input.GetActionStrength("ui_down") - Input.GetActionStrength("ui_up");
+    if (_inputVector.y == 0)
+      _inputVector.x = Input.GetActionStrength("ui_right") - Input.GetActionStrength("ui_left");
+    if (_inputVector.x == 0)
+      _inputVector.y = Input.GetActionStrength("ui_down") - Input.GetActionStrength("ui_up");
   }
 
   private void GetMotionStrength()
-  /*
-  * Executed every frame, this function update the MotionStrength variable based on InputVector.
-  * This variable is used to decide whether the player is moving forward or is turning.
-  */
   {
-    if (InputVector != Vector2.Zero && MotionStrength < 4)
-      MotionStrength++;
-    else if (InputVector == Vector2.Zero && MotionStrength > 0)
-      MotionStrength--;
+    if (_inputVector != Vector2.Zero && _motionStrength < 4)
+      _motionStrength++;
+    else if (_inputVector == Vector2.Zero && _motionStrength > 0)
+      _motionStrength--;
   }
 }
