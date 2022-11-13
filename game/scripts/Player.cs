@@ -12,6 +12,12 @@ public class Player : KinematicBody2D
     Door
   }
 
+  private enum Move
+  {
+    Forward,
+    Stand
+  }
+
   [Signal]
   public delegate void PlayerCollidedWithDoor();
 
@@ -34,6 +40,9 @@ public class Player : KinematicBody2D
 
   public override void _PhysicsProcess(float delta)
   {
+    // DEBUG LOGS
+    GD.Print("Player pos:" + Position);
+
     GetMotionStrength();
     if (!IsMoving)
     {
@@ -45,23 +54,35 @@ public class Player : KinematicBody2D
       }
     }
     else if (InputVector != Vector2.Zero && MotionStrength > 3)
-      MovePlayer(delta);
+    {
+      switch (GetCollision())
+      {
+        case CollisionType.Door:
+          EmitSignal(nameof(PlayerCollidedWithDoor));
+          GD.Print("Player collided with door");
+          MovePlayer(Move.Forward, delta);
+          break;
+
+        case CollisionType.Bump:
+          MovePlayer(Move.Stand, delta);
+          break;
+
+        case CollisionType.Void:
+          MovePlayer(Move.Forward, delta);
+          break;
+      }
+    }
     else
       IsMoving = false;
 
     AnimatePlayer();
   }
 
-  private void MovePlayer(float delta)
+  private void MovePlayer(Move enumerator, float delta)
   {
-    switch (GetCollision())
+    switch (enumerator)
     {
-      case CollisionType.Bump:
-        IsMoving = false;
-        MotionProgress = 0.0f;
-        break;
-
-      case CollisionType.Void:
+      case Move.Forward:
         MotionProgress += Speed * delta;
         if (MotionProgress >= 1.0f)
         {
@@ -71,6 +92,11 @@ public class Player : KinematicBody2D
         }
         else
           Position = InitialPosition + (InputVector * TileSize * MotionProgress);
+        break;
+
+      case Move.Stand:
+        MotionProgress = 0.0f;
+        IsMoving = false;
         break;
     }
   }
@@ -95,10 +121,17 @@ public class Player : KinematicBody2D
 
   private CollisionType GetCollision()
   {
+    RayCast2D RayCastDoor = GetNode<RayCast2D>("RayCastDoor");
     RayCast2D RayCastBump = GetNode<RayCast2D>("RayCastBump");
+
     RayCastBump.CastTo = InputVector * TileSize / 2;
+
+    RayCastDoor.ForceRaycastUpdate();
     RayCastBump.ForceRaycastUpdate();
-    if (RayCastBump.IsColliding())
+
+    if (RayCastDoor.IsColliding())
+      return CollisionType.Door;
+    else if (RayCastBump.IsColliding())
       return CollisionType.Bump;
     else
       return CollisionType.Void;
@@ -113,6 +146,10 @@ public class Player : KinematicBody2D
   }
 
   private void GetMotionStrength()
+  /*
+  * Executed every frame, this function update the MotionStrength variable based on InputVector.
+  * This variable is used to decide whether the player is moving forward or is turning.
+  */
   {
     if (InputVector != Vector2.Zero && MotionStrength < 4)
       MotionStrength++;
