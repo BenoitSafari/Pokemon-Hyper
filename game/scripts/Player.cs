@@ -14,6 +14,9 @@ public class Player : KinematicBody2D
   [Signal]
   public delegate void PlayerCollidedWithDoor();
 
+  [Signal]
+  public delegate void PlayerDirection(Direction direction);
+
   [Export]
   public float Speed = 6.0f;
 
@@ -43,6 +46,14 @@ public class Player : KinematicBody2D
     Stand
   }
 
+  public enum Direction
+  {
+    Up,
+    Down,
+    Left,
+    Right
+  }
+
   public override void _Ready()
   {
     _animationTree = GetNode<AnimationTree>("AnimationTree");
@@ -60,15 +71,13 @@ public class Player : KinematicBody2D
     // GD.Print("Player pos:" + Position);
     // GD.Print("_motionProgress:" + _motionProgress);
 
-    GetMotionStrength();
+    UpdateMotionStrength();
     if (!_isMoving && !IsInputLocked)
     {
-      GetInput();
+      UpdateInput();
+      SignalDirection();
       if (_inputVector != Vector2.Zero)
-      {
-        _initialPosition = Position;
-        _isMoving = true;
-      }
+        UpdateMovingState(true);
     }
     else if (_inputVector != Vector2.Zero && _motionStrength > 3)
     {
@@ -94,7 +103,6 @@ public class Player : KinematicBody2D
       EmitSignal(nameof(PlayerIsStandingStill));
       MovePlayer(Move.Stand, delta);
     }
-
     AnimatePlayer();
   }
 
@@ -107,16 +115,14 @@ public class Player : KinematicBody2D
         if (_motionProgress >= 1.0f)
         {
           Position = _initialPosition + (_inputVector * _tileSize);
-          _motionProgress = 0.0f;
-          _isMoving = false;
+          UpdateMovingState(false);
         }
         else
           Position = _initialPosition + (_inputVector * _tileSize * _motionProgress);
         break;
 
       case Move.Stand:
-        _motionProgress = 0.0f;
-        _isMoving = false;
+        UpdateMovingState(false);
         break;
     }
   }
@@ -138,15 +144,16 @@ public class Player : KinematicBody2D
     _rayCastBump.CastTo = _inputVector * _tileSize / 2;
     _rayCastDoor.ForceRaycastUpdate();
     _rayCastBump.ForceRaycastUpdate();
+
     if (_rayCastDoor.IsColliding())
       return CollisionType.Door;
-    else if (_rayCastBump.IsColliding())
+    if (_rayCastBump.IsColliding())
       return CollisionType.Bump;
-    else
-      return CollisionType.Void;
+
+    return CollisionType.Void;
   }
 
-  private void GetInput()
+  private void UpdateInput()
   {
     if (_inputVector.y == 0)
       _inputVector.x = Input.GetActionStrength("ui_right") - Input.GetActionStrength("ui_left");
@@ -154,11 +161,33 @@ public class Player : KinematicBody2D
       _inputVector.y = Input.GetActionStrength("ui_down") - Input.GetActionStrength("ui_up");
   }
 
-  private void GetMotionStrength()
+  private void UpdateMotionStrength()
   {
     if (_inputVector != Vector2.Zero && _motionStrength < 4)
       _motionStrength++;
     else if (_inputVector == Vector2.Zero && _motionStrength > 0)
       _motionStrength--;
+  }
+
+  private void UpdateMovingState(bool isMoving)
+  {
+    _isMoving = isMoving;
+
+    if (!isMoving)
+      _motionProgress = 0.0f;
+    else
+      _initialPosition = Position;
+  }
+
+  private void SignalDirection()
+  {
+    if (_inputVector.x == 1)
+      EmitSignal(nameof(PlayerDirection), Direction.Right);
+    else if (_inputVector.x == -1)
+      EmitSignal(nameof(PlayerDirection), Direction.Left);
+    else if (_inputVector.y == 1)
+      EmitSignal(nameof(PlayerDirection), Direction.Down);
+    else if (_inputVector.y == -1)
+      EmitSignal(nameof(PlayerDirection), Direction.Up);
   }
 }
