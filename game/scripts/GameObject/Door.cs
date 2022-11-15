@@ -5,7 +5,6 @@ public class Door : StaticBody2D
   private AnimatedSprite _animatedSprite;
   private RayCast2D _rayCastPlayer;
   private Player _player;
-  private Player.Direction _playerDirection;
 
   private enum Animation
   {
